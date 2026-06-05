@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sample OWASP Dependency Check Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 32px; color: #1f2937; }
+    table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+    th, td { border: 1px solid #d1d5db; padding: 10px; text-align: left; }
+    th { background: #f3f4f6; }
+    .high { color: #b91c1c; font-weight: bold; }
+    .none { color: #047857; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Sample OWASP Dependency Check Report</h1>
+  <p>Project: DevSecOps CI/CD Security Pipeline</p>
+  <p>Scan target: app/requirements.txt</p>
+  <table>
+    <thead>
+      <tr><th>Dependency</th><th>Version</th><th>CVE</th><th>CVSS</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Flask</td><td>2.2.5</td><td>None in sample baseline</td><td>0.0</td><td class="none">PASS</td></tr>
+      <tr><td>Werkzeug</td><td>2.2.3</td><td>None in sample baseline</td><td>0.0</td><td class="none">PASS</td></tr>
+      <tr><td>requests</td><td>2.31.0</td><td>None in sample baseline</td><td>0.0</td><td class="none">PASS</td></tr>
+    </tbody>
+  </table>
+  <h2>Gate Result</h2>
+  <p>No dependency with CVSS score equal to or above 7. Deployment can proceed.</p>
+</body>
+</html>

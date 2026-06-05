@@ -1,0 +1,19 @@
+directory:
+  - terraform
+framework:
+  - terraform
+compact: true
+quiet: false
+soft-fail: false
+download-external-modules: false
+output:
+  - cli
+  - json
+  - junitxml
+  - html
+output-file-path: reports/checkov-report
+hard-fail-on:
+  - HIGH
+  - CRITICAL
+skip-check:
+  - CKV_AWS_79 # Demo EC2 instance does not configure detailed user-provided KMS key.
