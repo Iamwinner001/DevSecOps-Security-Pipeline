@@ -1,0 +1,280 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        ansiColor('xterm')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        AWS_REGION = 'us-east-1'
+        TF_IN_AUTOMATION = 'true'
+        TF_INPUT = 'false'
+        REPORT_DIR = 'reports'
+        SONARQUBE_ENV = 'SonarQube'
+        CHECKOV_JSON = 'reports/checkov-report/results_json.json'
+        BANDIT_JSON = 'reports/bandit-report.json'
+        DEP_CHECK_JSON = 'reports/dependency-check/dependency-check-report.json'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                sh 'mkdir -p reports/checkov-report reports/dependency-check'
+            }
+        }
+
+        stage('Terraform Validate') {
+            steps {
+                dir('terraform') {
+                    sh 'terraform init -backend=false'
+                    sh 'terraform fmt -check'
+                    sh 'terraform validate'
+                }
+            }
+        }
+
+        stage('Checkov Scan') {
+            steps {
+                sh '''
+                    checkov -d terraform \
+                      --config-file security/checkov.yml \
+                      --output cli --output json --output junitxml --output html \
+                      --output-file-path reports/checkov-report \
+                      || true
+                '''
+            }
+        }
+
+        stage('Python Lint') {
+            steps {
+                sh '''
+                    python -m venv .venv
+                    . .venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r app/requirements.txt
+                    python -m compileall app
+                '''
+            }
+        }
+
+        stage('Bandit Scan') {
+            steps {
+                sh '''
+                    . .venv/bin/activate
+                    pip install bandit
+                    bandit -r app -c security/bandit.yml -f json -o reports/bandit-report.json || true
+                    bandit -r app -c security/bandit.yml -f html -o reports/bandit-report.html || true
+                '''
+            }
+        }
+
+        stage('Dependency Check') {
+            steps {
+                sh '''
+                    dependency-check.sh \
+                      --project "DevSecOps CI/CD Security Pipeline" \
+                      --scan app \
+                      --format HTML \
+                      --format JSON \
+                      --format JUNIT \
+                      --out reports/dependency-check \
+                      --failOnCVSS 7 \
+                      || true
+                '''
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE_ENV}") {
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            sonar-scanner \
+                              -Dsonar.projectKey=devsecops-security-pipeline \
+                              -Dsonar.projectName="DevSecOps Security Pipeline" \
+                              -Dsonar.sources=app \
+                              -Dsonar.python.version=3.11 \
+                              -Dsonar.host.url=$SONAR_HOST_URL \
+                              -Dsonar.token=$SONAR_TOKEN
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Security Gate') {
+            steps {
+                script {
+                    def policy = evaluateSecurityPolicy()
+                    echo "Security gate summary: ${policy}"
+
+                    if (policy.critical > 0) {
+                        error("Security gate failed: critical findings detected (${policy.critical}).")
+                    }
+                    if (policy.high > 0) {
+                        error("Security gate failed: high findings detected (${policy.high}).")
+                    }
+                    if (policy.medium > 5) {
+                        unstable("Security gate warning: medium findings exceed warning threshold (${policy.medium}).")
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-devsecops-deploy']]) {
+                    dir('terraform') {
+                        sh 'terraform init'
+                        sh 'terraform plan -out=tfplan -var="environment=dev"'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Security gates passed. Deploy infrastructure to AWS?', ok: 'Deploy'
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-devsecops-deploy']]) {
+                    dir('terraform') {
+                        sh 'terraform apply -auto-approve tfplan'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Application') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh '''
+                    docker build -t devsecops-security-pipeline:latest app
+                    echo "Deploy application artifact to EC2/ECR/ECS in enterprise implementation."
+                '''
+            }
+        }
+
+        stage('Publish Reports') {
+            steps {
+                archiveArtifacts artifacts: 'reports/**/*', allowEmptyArchive: true
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'reports/checkov-report',
+                    reportFiles: 'results_html.html',
+                    reportName: 'Checkov IaC Security Report'
+                ])
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'reports',
+                    reportFiles: 'bandit-report.html',
+                    reportName: 'Bandit SAST Report'
+                ])
+                publishHTML(target: [
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'reports/dependency-check',
+                    reportFiles: 'dependency-check-report.html',
+                    reportName: 'OWASP Dependency Check Report'
+                ])
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                def status = currentBuild.currentResult
+                echo "Build completed with status: ${status}"
+            }
+        }
+        success {
+            echo 'Notification: DevSecOps pipeline passed and deployment completed.'
+        }
+        unstable {
+            echo 'Notification: DevSecOps pipeline completed with warnings. Review medium findings.'
+        }
+        failure {
+            echo 'Notification: DevSecOps pipeline failed. Deployment blocked by security gate or quality gate.'
+        }
+    }
+}
+
+def evaluateSecurityPolicy() {
+    def result = [
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0
+    ]
+
+    if (fileExists(env.CHECKOV_JSON)) {
+        def checkov = readJSON file: env.CHECKOV_JSON
+        checkov.results?.failed_checks?.each { finding ->
+            def severity = normalizeSeverity(finding.severity)
+            result[severity] = result[severity] + 1
+        }
+    }
+
+    if (fileExists(env.BANDIT_JSON)) {
+        def bandit = readJSON file: env.BANDIT_JSON
+        bandit.results?.each { finding ->
+            def severity = normalizeSeverity(finding.issue_severity)
+            result[severity] = result[severity] + 1
+        }
+    }
+
+    if (fileExists(env.DEP_CHECK_JSON)) {
+        def dependencyCheck = readJSON file: env.DEP_CHECK_JSON
+        dependencyCheck.dependencies?.each { dependency ->
+            dependency.vulnerabilities?.each { vuln ->
+                def score = vuln.cvssv3?.baseScore ?: vuln.cvssv2?.score ?: 0
+                if (score >= 9) {
+                    result.critical = result.critical + 1
+                } else if (score >= 7) {
+                    result.high = result.high + 1
+                } else if (score >= 4) {
+                    result.medium = result.medium + 1
+                } else if (score > 0) {
+                    result.low = result.low + 1
+                }
+            }
+        }
+    }
+
+    return result
+}
+
+def normalizeSeverity(value) {
+    def severity = (value ?: 'low').toString().toLowerCase()
+    if (severity.contains('critical')) {
+        return 'critical'
+    }
+    if (severity.contains('high')) {
+        return 'high'
+    }
+    if (severity.contains('medium')) {
+        return 'medium'
+    }
+    return 'low'
+}
