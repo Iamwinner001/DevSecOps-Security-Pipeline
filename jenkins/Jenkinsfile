@@ -222,7 +222,6 @@ pipeline {
             echo 'Notification: DevSecOps pipeline failed. Deployment blocked by security gate or quality gate.'
         }
     }
-}
 
 def evaluateSecurityPolicy() {
     def result = [
