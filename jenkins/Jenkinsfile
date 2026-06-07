@@ -36,9 +36,11 @@ pipeline {
                 sh '''
                     checkov -d terraform \
                       --config-file security/checkov.yml \
-                      --output cli --output json --output junitxml --output html \
+                      --output cli \
+                      --output json \
+                      --output junitxml \
                       --output-file-path reports/checkov-report \
-                      || true
+                       || true
                 '''
             }
         }
