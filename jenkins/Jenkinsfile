@@ -1,17 +1,16 @@
 pipeline {
     agent any
     options {
-        ansiColor('xterm')
+        timestamps()
     }
     stages {
         stage('Build') {
             steps {
-                echo '\033[34mHello\033[0m \033[33mcolorful\033[0m \033[35mworld!\033[0m'
+                echo 'Hello DevSecOps Pipeline!'
             }
         }
     }
 }
-
     environment {
         AWS_REGION = 'us-east-1'
         TF_IN_AUTOMATION = 'true'
