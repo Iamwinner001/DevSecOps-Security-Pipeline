@@ -3,14 +3,6 @@ pipeline {
     options {
         timestamps()
     }
-    stages {
-        stage('Build') {
-            steps {
-                echo 'Hello DevSecOps Pipeline!'
-            }
-        }
-    }
-
     environment {
         AWS_REGION = 'us-east-1'
         TF_IN_AUTOMATION = 'true'
