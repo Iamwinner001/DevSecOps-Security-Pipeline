@@ -148,9 +148,9 @@ resource "aws_s3_bucket" "logs" {
   bucket = "${local.name_prefix}-logs-${data.aws_caller_identity.current.account_id}"
 
   tags = {
-    Name        = "${local.name_prefix}-logs"
-    DataClass   = "security-logs"
-    Compliance  = "required"
+    Name       = "${local.name_prefix}-logs"
+    DataClass  = "security-logs"
+    Compliance = "required"
   }
 }
 
