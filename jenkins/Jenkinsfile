@@ -10,7 +10,7 @@ pipeline {
             }
         }
     }
-}
+
     environment {
         AWS_REGION = 'us-east-1'
         TF_IN_AUTOMATION = 'true'
@@ -21,7 +21,6 @@ pipeline {
         BANDIT_JSON = 'reports/bandit-report.json'
         DEP_CHECK_JSON = 'reports/dependency-check/dependency-check-report.json'
     }
-
     stages {
         stage('Checkout') {
             steps {
@@ -221,7 +220,7 @@ pipeline {
             echo 'Notification: DevSecOps pipeline failed. Deployment blocked by security gate or quality gate.'
         }
     }
-
+}
 def evaluateSecurityPolicy() {
     def result = [
         critical: 0,
