@@ -381,25 +381,42 @@ The repository includes both a vulnerable app (`app.py`) and a remediated versio
 ### Jenkins Pipeline — Full Stage View
 ```
 📸 [ Screenshot: Jenkins Blue Ocean pipeline showing all stages with status indicators ]
-    Location: docs/screenshots/jenkins-pipeline-full.png
+    Location: screenshots/jenkins-pipeline-overview.png
 ```
 
-### SonarQube Dashboard — Quality Gate Passed
+### SonarQube Dashboard 
 ```
-📸 [ Screenshot: SonarQube project dashboard showing Quality Gate: Passed, 0 bugs, 0 vulnerabilities ]
-    Location: docs/screenshots/sonarqube-dashboard.png
+📸 [ Screenshot: SonarQube project dashboard showing  Passed, 0 bugs, 0 vulnerabilities ]
+    Location: screenshots/sonarqube-dashboard.png
+```
+### Infrastructure as Code Security (Checkov)
+Terraform configurations are scanned using Checkov before deployment to identify AWS security misconfigurations and enforce security best practices.
+
+### Checkov Scan Summary
+```
+![Checkov Summary](screenshots/checkov-summary.png)
+```
+### Example Security Findings
+```
+The scan identifies cloud security risks such as missing VPC Flow Logs, insufficient S3 logging, and encryption configuration gaps.
+![Checkov Findings](screenshots/checkov-findings.png)
+```
+### Quality Gate Validation
+```
+📸 [ Screenshot: Showing Quality gate validation]
+    Location: screenshots/sonarqube-quality-gate.png
+```  
+## Security Gate Enforcement
+```
+📸 The pipeline evaluates security findings from Bandit, Checkov, and Dependency Check before deployment.
+    High and Critical findings automatically block deployment.
+    Location: (screenshots/security-gate-blocked.png)
 ```
 
-### Security Gate Results — Build Blocked
+## Static Application Security Testing (SAST)
 ```
-📸 [ Screenshot: Jenkins console output showing security gate evaluation and blocked deployment ]
-    Location: docs/screenshots/security-gate-blocked.png
-```
-
-### Security Reports — Jenkins HTML Publisher
-```
-📸 [ Screenshot: Jenkins build page with Bandit, Checkov, and Dependency Check HTML report links ]
-    Location: docs/screenshots/jenkins-security-reports.png
+Bandit is used to identify insecure coding patterns such as command injection risks, insecure Flask configurations, and unsafe network bindings.
+    Location:(screenshots/bandit-report.png)
 ```
 
 ### OWASP Dependency Check Report
