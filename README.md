@@ -409,7 +409,7 @@ Summary of passed and failed infrastructure security checks generated during Ter
 ### 5. Security Gate Enforcement
 Pipeline security gate blocking deployment when security thresholds are exceeded.
 
-![Security Gate Blocked](screenshots/05-security-gate-blocked..png)
+![Security Gate Blocked](screenshots/05-security-gate-blocked.png)
 
 ---
 
