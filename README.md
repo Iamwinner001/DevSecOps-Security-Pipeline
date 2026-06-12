@@ -374,56 +374,63 @@ The repository includes both a vulnerable app (`app.py`) and a remediated versio
 
 ---
 
-## 📸 Screenshots
+## Project Screenshots
 
 > *Pipeline screenshots captured from local Jenkins and SonarQube environment.*
 
-### Jenkins Pipeline — Full Stage View
-```
-📸 [ Screenshot: Jenkins Blue Ocean pipeline showing all stages with status indicators ]
-    Location: screenshots/jenkins-pipeline-overview.png
-```
+### 1. Jenkins Pipeline Execution
+Shows the complete DevSecOps pipeline execution flow with all stages successfully completed.
 
-### SonarQube Dashboard 
-```
-📸 [ Screenshot: SonarQube project dashboard showing  Passed, 0 bugs, 0 vulnerabilities ]
-    Location: screenshots/sonarqube-dashboard.png
-```
-### Infrastructure as Code Security (Checkov)
-Terraform configurations are scanned using Checkov before deployment to identify AWS security misconfigurations and enforce security best practices.
+![Jenkins Pipeline Overview](screenshots/01-jenkins-pipeline-overview.png)
 
-### Checkov Scan Summary
-```
-![Checkov Summary](screenshots/checkov-summary.png)
-```
-### Example Security Findings
-```
-The scan identifies cloud security risks such as missing VPC Flow Logs, insufficient S3 logging, and encryption configuration gaps.
-![Checkov Findings](screenshots/checkov-findings.png)
-```
-### Quality Gate Validation
-```
-📸 [ Screenshot: Showing Quality gate validation]
-    Location: screenshots/sonarqube-quality-gate.png
-```  
-## Security Gate Enforcement
-```
-📸 The pipeline evaluates security findings from Bandit, Checkov, and Dependency Check before deployment.
-    High and Critical findings automatically block deployment.
-    Location: (screenshots/security-gate-blocked.png)
-```
+---
 
-## Static Application Security Testing (SAST)
-```
-Bandit is used to identify insecure coding patterns such as command injection risks, insecure Flask configurations, and unsafe network bindings.
-    Location:(screenshots/bandit-report.png)
-```
+### 2. SonarQube Project Dashboard
+Demonstrates code quality analysis results, Quality Gate status, security rating, reliability rating, and maintainability metrics.
 
-### OWASP Dependency Check Report
-```
-📸 [ Screenshot: Dependency Check HTML report showing CVE summary and CVSS scores ]
-    Location: docs/screenshots/dependency-check-report.png
-```
+![SonarQube Dashboard](screenshots/02-sonarqube-dashboard.png)
+
+---
+
+### 3. Checkov Security Findings
+Infrastructure-as-Code (IaC) security scan identifying AWS security misconfigurations and compliance violations.
+
+![Checkov Findings](screenshots/03-checkov-findings.png)
+
+---
+
+### 4. Checkov Scan Summary
+Summary of passed and failed infrastructure security checks generated during Terraform validation.
+
+![Checkov Summary](screenshots/04-checkov-summary.png)
+
+---
+
+### 5. Security Gate Enforcement
+Pipeline security gate blocking deployment when security thresholds are exceeded.
+
+![Security Gate Blocked](screenshots/05-security-gate-blocked..png)
+
+---
+
+### 6. SonarQube Quality Gate Passed
+Successful Quality Gate validation confirming code meets required quality standards.
+
+![SonarQube Quality Gate](screenshots/06-sonarqube-quality-gate.png)
+
+---
+
+### 7. Bandit Security Report
+Python Static Application Security Testing (SAST) report highlighting intentional vulnerabilities detected during scanning.
+
+![Bandit Report](screenshots/07-bandit-report.png)
+
+---
+
+### 8. OWASP Dependency Check Report
+Software Composition Analysis (SCA) report showing dependency vulnerability assessment results.
+
+![Dependency Check Report](screenshots/08-dependency-check-report.png)
 
 ---
 
